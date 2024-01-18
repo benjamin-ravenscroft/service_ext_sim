@@ -31,8 +31,8 @@ Simulation::Simulation(int n_ep, std::vector<int> clin, double lam, double ext_p
         n_classes = serv_path.size();
         class_dstb = std::discrete_distribution<> (serv_prob.begin(), serv_prob.end());
 
-        // dl = DischargeList(path);
-        dl = DischargeList();
+        dl = DischargeList(path);
+        // dl = DischargeList();
         wl = Waitlist(n_classes, rng);
 }
 
@@ -104,23 +104,28 @@ void Simulation::write_parquet(std::string path) {
 int main(){
     std::string extension_protocols[3] = {"Standard", "Reduced Frequency", "Waitlist"};
     int n_epochs = 10000;
-    std::vector<int> clinicians = {(40*19)};
-    double arr_lam = 34;
+    std::vector<int> clinicians = {(8*100)};
+    double arr_lam = 36;
     double ext_prob = 0.05;
     std::vector<int> serv_path = {14, 21, 28};
     std::vector<double> serv_prob = {(100/3), (100/3), (100/3)};
 
+    int runs = 50;
+
     for (int ext_pol = 0; ext_pol < sizeof(extension_protocols)/sizeof(std::string); ext_pol++) {
         std::cout << "Running " << extension_protocols[ext_pol] << " policy simulation:" << std::endl;
-        std::string path = "/mnt/c/Users/benja/OneDrive - University of Waterloo/KidsAbility Research/Extending Patient Treatment/C++ Simulation Results/Test/";
-        path += ("simulation_data_" + extension_protocols[ext_pol] + ".parquet");
-        Simulation sim = Simulation(n_epochs, clinicians, arr_lam, ext_prob, ext_pol, serv_path, serv_prob, path);
-        sim.generate_servers();
-        sim.run();
-        std::cout << "Discharge list length: " << sim.dl.size() << std::endl;
-        std::cout << "Waitlist length: " << sim.wl.len_waitlist() << std::endl;
+        std::string path = "/mnt/c/Users/benja/OneDrive - University of Waterloo/KidsAbility Research/Extending Patient Treatment/C++ Simulation Results/Test Multi Run/" + extension_protocols[ext_pol] + "/";
+        for (int run = 0; run < runs; run++){
+            std::cout << "Run " << run << std::endl;
+            std::string run_path =  path + ("simulation_data_" + std::to_string(run) + ".parquet");
+            Simulation sim = Simulation(n_epochs, clinicians, arr_lam, ext_prob, ext_pol, serv_path, serv_prob, run_path);
+            sim.generate_servers();
+            sim.run();
+            std::cout << "Discharge list length: " << sim.dl.size() << std::endl;
+            std::cout << "Waitlist length: " << sim.wl.len_waitlist() << std::endl;
+        }
         // output results to a parquet file
-        sim.write_parquet(path);
+        // sim.write_parquet(path);
     }
 
     // Patient pat = Patient(0, 0, 14, 0.05, rng);

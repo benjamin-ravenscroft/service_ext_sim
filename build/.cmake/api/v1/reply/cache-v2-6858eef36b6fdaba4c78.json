@@ -847,10 +847,10 @@
 				},
 				{
 					"name" : "HELPSTRING",
-					"value" : "CXX compiler"
+					"value" : "No help, variable specified on the command line."
 				}
 			],
-			"type" : "STRING",
+			"type" : "FILEPATH",
 			"value" : "/usr/bin/g++"
 		},
 		{
@@ -975,10 +975,10 @@
 				},
 				{
 					"name" : "HELPSTRING",
-					"value" : "C compiler"
+					"value" : "No help, variable specified on the command line."
 				}
 			],
-			"type" : "STRING",
+			"type" : "FILEPATH",
 			"value" : "/usr/bin/gcc"
 		},
 		{
@@ -5703,7 +5703,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "/usr/local/lib"
+			"value" : "AsynchDNS;GSS-API;HSTS;HTTP2;HTTPS-proxy;IDN;IPv6;Kerberos;Largefile;NTLM;NTLM_WB;PSL;SPNEGO;SSL;TLS-SRP;UnixSockets;alt-svc;brotli;libz;zstd"
 		},
 		{
 			"name" : "re2_DIR",
@@ -5787,7 +5787,7 @@
 				}
 			],
 			"type" : "PATH",
-			"value" : "zstd_DIR-NOTFOUND"
+			"value" : "/mnt/c/Users/benja/anaconda3/Library/lib/cmake/zstd"
 		}
 	],
 	"kind" : "cache",

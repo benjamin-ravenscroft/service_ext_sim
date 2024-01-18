@@ -84,6 +84,10 @@
 				"role" : "flags"
 			},
 			{
+				"fragment" : "-Wl,-rpath,/mnt/c/Users/benja/anaconda3/Library/bin",
+				"role" : "libraries"
+			},
+			{
 				"backtrace" : 2,
 				"fragment" : "/usr/lib/x86_64-linux-gnu/libarrow.so.1400.1.0",
 				"role" : "libraries"
@@ -91,6 +95,10 @@
 			{
 				"backtrace" : 2,
 				"fragment" : "/usr/lib/x86_64-linux-gnu/libparquet.so.1400.1.0",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "-Wl,-rpath-link,/mnt/c/Users/benja/anaconda3/Library/bin",
 				"role" : "libraries"
 			}
 		],
