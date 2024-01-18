@@ -1,0 +1,4 @@
+{
+    "cmake.configureOnOpen": true,
+    "cmake.sourceDirectory": "/home/benja/kidsAbility/service_ext_sim/simulation"
+}

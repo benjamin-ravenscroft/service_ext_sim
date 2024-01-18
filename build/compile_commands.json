@@ -1,0 +1,27 @@
+[
+{
+  "directory": "/home/benja/kidsAbility/service_ext_sim/build",
+  "command": "/usr/bin/g++  -I/home/benja/kidsAbility/service_ext_sim/simulation/include -g -o CMakeFiles/simulation.dir/src/simulation.cpp.o -c /home/benja/kidsAbility/service_ext_sim/simulation/src/simulation.cpp",
+  "file": "/home/benja/kidsAbility/service_ext_sim/simulation/src/simulation.cpp"
+},
+{
+  "directory": "/home/benja/kidsAbility/service_ext_sim/build",
+  "command": "/usr/bin/g++  -I/home/benja/kidsAbility/service_ext_sim/simulation/include -g -o CMakeFiles/simulation.dir/src/DischargeList.cpp.o -c /home/benja/kidsAbility/service_ext_sim/simulation/src/DischargeList.cpp",
+  "file": "/home/benja/kidsAbility/service_ext_sim/simulation/src/DischargeList.cpp"
+},
+{
+  "directory": "/home/benja/kidsAbility/service_ext_sim/build",
+  "command": "/usr/bin/g++  -I/home/benja/kidsAbility/service_ext_sim/simulation/include -g -o CMakeFiles/simulation.dir/src/Patient.cpp.o -c /home/benja/kidsAbility/service_ext_sim/simulation/src/Patient.cpp",
+  "file": "/home/benja/kidsAbility/service_ext_sim/simulation/src/Patient.cpp"
+},
+{
+  "directory": "/home/benja/kidsAbility/service_ext_sim/build",
+  "command": "/usr/bin/g++  -I/home/benja/kidsAbility/service_ext_sim/simulation/include -g -o CMakeFiles/simulation.dir/src/Server.cpp.o -c /home/benja/kidsAbility/service_ext_sim/simulation/src/Server.cpp",
+  "file": "/home/benja/kidsAbility/service_ext_sim/simulation/src/Server.cpp"
+},
+{
+  "directory": "/home/benja/kidsAbility/service_ext_sim/build",
+  "command": "/usr/bin/g++  -I/home/benja/kidsAbility/service_ext_sim/simulation/include -g -o CMakeFiles/simulation.dir/src/Waitlist.cpp.o -c /home/benja/kidsAbility/service_ext_sim/simulation/src/Waitlist.cpp",
+  "file": "/home/benja/kidsAbility/service_ext_sim/simulation/src/Waitlist.cpp"
+}
+]
