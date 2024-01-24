@@ -438,7 +438,7 @@ utf8proc_INCLUDE_DIR:PATH=/usr/include
 utf8proc_LIB:FILEPATH=/usr/lib/x86_64-linux-gnu/libutf8proc.so
 
 //The directory containing a CMake configuration file for zstd.
-zstd_DIR:PATH=/mnt/c/Users/benja/anaconda3/Library/lib/cmake/zstd
+zstd_DIR:PATH=zstd_DIR-NOTFOUND
 
 
 ########################

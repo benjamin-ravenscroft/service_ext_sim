@@ -6,5 +6,5 @@ CXX_DEFINES =
 
 CXX_INCLUDES = -I/home/benja/kidsAbility/service_ext_sim/simulation/include
 
-CXX_FLAGS = -g
+CXX_FLAGS = -Wall -Wextra -g
 
