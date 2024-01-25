@@ -4,9 +4,8 @@
 #include "Waitlist.h"
 #include "DischargeList.h"
 
-Server::Server(Waitlist &wl, DischargeList &dl, int ext) : waitlist(wl), discharge_list(dl) {
-    n_patients = 0;
-    ext_prot = ext;
+Server::Server(Waitlist &wl, DischargeList &dl, int ext_prot) : waitlist(wl), discharge_list(dl) {
+    Server::set_ext_prot(ext_prot);
 }
 
 void Server::add_patient(Patient &patient) {
@@ -71,13 +70,14 @@ void Server::process_epoch(int epoch){
     } else {
         Patient p = caseload.front();
         caseload.pop_front();
-        std::array<bool, 2> check = p.process_patient(epoch);
+        std::array<bool, 2> check = p.process_patient(epoch, waitlist.len_waitlist());
         if (check[0]) { // if they have reached their service_max
             if (!check[1]) { // if they ARE NOT extended
                 p.set_discharge_time(epoch);
                 discharge_list.add_patient(p);
                 n_patients -= 1;
             } else { // if they are extended
+                // std::cout << "Check is " << check[1] << std::endl;
                 Server::process_extension(p, epoch);
             }
         } else {
@@ -89,6 +89,9 @@ void Server::process_epoch(int epoch){
         }
     }
 }
+
+// member variable setter methods
+void Server::set_ext_prot(int protocol){ext_prot=protocol;}
 
 void Server::print_patients() {
     if (caseload.size() > 0) {

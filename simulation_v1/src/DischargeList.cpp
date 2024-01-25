@@ -14,7 +14,7 @@ DischargeList::DischargeList(){
 
 DischargeList::DischargeList(std::string p){
     discharge_list = std::vector<Patient>();
-    path = p;
+    DischargeList::set_path(p);
 
     std::shared_ptr<arrow::io::FileOutputStream> outfile;
 
@@ -49,3 +49,9 @@ int DischargeList::get_n_patients(){return n_patients;}
 int DischargeList::size(){
     return discharge_list.size();
 }
+
+// setter methods
+void DischargeList::set_path(std::string p){path = p;}
+
+// getter methods
+std::vector<Patient> DischargeList::get_discharge_list(){return discharge_list;}

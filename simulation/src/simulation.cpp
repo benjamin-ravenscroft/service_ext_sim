@@ -119,7 +119,7 @@ int main(){
 
     for (int ext_pol = 0; ext_pol < sizeof(extension_protocols)/sizeof(std::string); ext_pol++) {
         std::cout << "Running " << extension_protocols[ext_pol] << " policy simulation:" << std::endl;
-        std::string path = "/mnt/c/Users/benja/OneDrive - University of Waterloo/KidsAbility Research/Extending Patient Treatment/C++ Simulation Results/l_36_800_s_1_r/" + extension_protocols[ext_pol] + "/";
+        std::string path = "/mnt/c/Users/benja/OneDrive - University of Waterloo/KidsAbility Research/Extending Patient Treatment/C++ Simulation Results/Test/" + extension_protocols[ext_pol] + "/";
         for (int run = 0; run < runs; run++){
             std::cout << "Run " << run << std::endl;
             std::string run_path =  path + ("simulation_data_" + std::to_string(run) + ".parquet");

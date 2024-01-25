@@ -9,16 +9,23 @@
 
 class DischargeList{
     public:
-        std::vector<Patient> discharge_list;
-        std::string path;
-        parquet::StreamWriter os;
-        int n_patients = 0;
-
         DischargeList();
         DischargeList(std::string p);
 
         void add_patient(Patient patient);
         int get_n_patients();
         int size();
+
+        // member-variable setters
+        void set_path(std::string pathways);
+
+        std::vector<Patient> get_discharge_list();
+    
+    private:
+        std::vector<Patient> discharge_list;
+        std::string path;
+        parquet::StreamWriter os;
+        int n_patients = 0;
+
 };
 #endif

@@ -7,24 +7,27 @@
 
 class Patient{
     public:
-        int arrival_time;
-        int pathway;
-        int base_duration;
-        int service_duration;
-        std::vector<int> appt_epochs;
-        int extended = 0;
-        double extend_prob;
-        int discharge_time = 0;
-        int total_wait_time = 0;
-        int ext_cap = 1;
         std::mt19937 rng;
         std::uniform_real_distribution<double> dis;
 
-        Patient(int arr_t, int path, int duration, double extend_prob, std::mt19937 &gen);
+        Patient(int arrival_time, int pathway, int base_duration, double service_red_beta, double ext_prob_cap,
+                    double base_ext_p, double wait_ext_beta, double queue_ext_beta, std::mt19937 &gen);
 
         void add_appt(int epoch);
         void add_wait(int wlist_arr_t, int add_t);
-        std::array<bool, 2> process_patient(int epoch);
+        std::array<bool, 2> process_patient(int epoch, int wl_len);
+
+        // setters
+        void set_arrival_time(int t);
+        void set_pathway(int p);
+        void set_base_duration(int d);
+        void set_service_duration(int d);
+        void set_service_red_beta(double d);
+        void set_ext_prob_cap(double p);
+        void set_base_ext_p(double p);
+        void set_wait_ext_beta(double b);
+        void set_queue_ext_beta(double b);
+        void set_extended(int c);
 
         int get_pathway();
         int get_base_duration();
@@ -39,6 +42,22 @@ class Patient{
         void set_discharge_time(int epoch);
 
     private:
-        std::array<bool, 2> check_complete();
+        int arrival_time;
+        int pathway;
+        int base_duration;
+        int service_duration;
+        double service_red_beta;
+        std::vector<int> appt_epochs;
+        int extended = 0;
+        double ext_prob_cap;
+        double base_ext_p;
+        double wait_ext_beta;
+        double queue_ext_beta;
+        int discharge_time = 0;
+        int total_wait_time = 0;
+        int ext_cap = 1;
+
+        double calculate_ext_prob();
+        std::array<bool, 2> check_complete(int wl_len);
 };
 #endif

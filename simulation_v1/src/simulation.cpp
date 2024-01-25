@@ -5,6 +5,8 @@
 #include <iomanip>
 #include <string>
 #include <chrono>
+#include <charconv>
+#include <stdexcept>
 
 #include "arrow/io/file.h"
 #include "parquet/stream_writer.h"
@@ -15,26 +17,47 @@
 #include "DischargeList.h"
 #include "Server.h"
 #include "Reader_Writer.h"
+#include "WriteCSV.h"
 
 std::random_device rd;
 std::mt19937 rng(rd());
 
-Simulation::Simulation(int n_ep, std::vector<int> clin, double lam, double ext_p, int pol,
-    std::vector<int> serv_path, std::vector<double> serv_prob, std::string path) {
-        n_epochs = n_ep;
-        clinicians = clin;
-        arr_lam = lam;
-        ext_prob = ext_p;
-        ext_pol = pol;
-        pathways = serv_path;
-        probs = serv_prob;
-        n_classes = serv_path.size();
-        class_dstb = std::discrete_distribution<> (serv_prob.begin(), serv_prob.end());
+Simulation::Simulation(int n_epochs, std::vector<int> clinicians, double arr_lam, double service_red_beta,
+                        double ext_prob_cap, double ext_prob, double wait_ext_beta, double queue_ext_beta, int ext_pol, 
+                        std::vector<int> pathways, std::vector<double> probs, std::string path) {
 
-        dl = DischargeList(path);
-        // dl = DischargeList();
-        wl = Waitlist(n_classes, rng);
+        Simulation::set_n_epochs(n_epochs);
+        Simulation::set_clinicians(clinicians);
+        Simulation::set_arr_lam(arr_lam);
+        Simulation::set_service_red_beta(service_red_beta);
+        Simulation::set_ext_prob_cap(ext_prob_cap);
+        Simulation::set_ext_prob(ext_prob);
+        Simulation::set_wait_ext_beta(wait_ext_beta);
+        Simulation::set_queue_ext_beta(queue_ext_beta);
+        Simulation::set_ext_pol(ext_pol);
+        Simulation::set_pathways(pathways);
+        Simulation::set_probs(probs);
+        Simulation::set_n_classes(pathways.size());
+        Simulation::set_class_dstb(std::discrete_distribution<> (probs.begin(), probs.end()));
+        Simulation::set_discharge_list(path);
+        Simulation::set_waitlist(n_classes, rng);
 }
+
+void Simulation::set_n_epochs(int n){n_epochs = n;}
+void Simulation::set_clinicians(std::vector<int> c){clinicians = c;}
+void Simulation::set_arr_lam(double l){arr_lam = l;}
+void Simulation::set_service_red_beta(double b){service_red_beta = b;}
+void Simulation::set_ext_prob_cap(double p){ext_prob_cap = p;}
+void Simulation::set_ext_prob(double p){ext_prob = p;}
+void Simulation::set_wait_ext_beta(double b){wait_ext_beta = b;}
+void Simulation::set_queue_ext_beta(double b){queue_ext_beta = b;}
+void Simulation::set_ext_pol(int p){ext_pol = p;}
+void Simulation::set_pathways(std::vector<int> ps){pathways = ps;}
+void Simulation::set_probs(std::vector<double> ps){probs = ps;}
+void Simulation::set_n_classes(int n){n_classes = n;}
+void Simulation::set_class_dstb(std::discrete_distribution<> dstb){class_dstb = dstb;}
+void Simulation::set_discharge_list(std::string p){dl = DischargeList(p);}
+void Simulation::set_waitlist(int n, std::mt19937 &gen){wl = Waitlist(n, gen);}
 
 void Simulation::generate_servers() {
     for (int i = 0; i < clinicians.size(); i++) {
@@ -51,7 +74,7 @@ void Simulation::generate_arrivals(int epoch) {
     // std::cout << "Adding " << n_patients << " patients to waitlist." << std::endl;
     for (int i = 0; i < n_patients; i++) {
         int pat_class = class_dstb(rng); // get int pat class
-        Patient pat = Patient(epoch, pat_class, pathways[pat_class], ext_prob, rng);
+        Patient pat = Patient(epoch, pat_class, pathways[pat_class], service_red_beta, ext_prob_cap, ext_prob, wait_ext_beta, queue_ext_beta, rng);
         wl.add_patient(pat, epoch);
         // std::cout << "Waitlist length after adding patient: " << wl.len_waitlist() << std::endl;
     }
@@ -71,6 +94,10 @@ void Simulation::run() {
 }
 
 int Simulation::get_n_admitted(){return n_admitted;}
+
+int Simulation::get_n_discharged(){return dl.get_n_patients();}
+
+int Simulation::get_n_waitlist(){return wl.len_waitlist();}
 
 void Simulation::write_statistics(std::string path){}
 
@@ -99,34 +126,62 @@ void Simulation::write_parquet(std::string path) {
 
     std::cout << "Setup output stream" << std::endl;
 
-    for (auto & patient : dl.discharge_list) {
+    for (auto & patient : dl.get_discharge_list()) {
         os << (patient.get_pathway()) << (patient.get_base_duration()) << (patient.get_arrival_t()) << (patient.get_first_appt())
             << (patient.get_n_appts()) << (patient.get_discharge_time()) << (patient.get_n_ext())
             << (patient.get_sojourn_time()) << (patient.get_total_wait_time()) << parquet::EndRow;
     }
 }
 
-int main(){
+int main(int argc, char *argv[]){
     std::string extension_protocols[3] = {"Standard", "Reduced Frequency", "Waitlist"};
-    int n_epochs = 25000;
+    int n_epochs = 10000;
     std::vector<int> clinicians = {(800)};
-    double arr_lam = 36;
+    double arr_lam = 34;
+    double service_red_beta = 0;
+    double ext_prob_cap = 0.2;
     double ext_prob = 0.05;
-    std::vector<int> serv_path = {14, 21, 28};
-    std::vector<double> serv_prob = {40, 40, 20};
+    double wait_ext_beta = 0.001;
+    double queue_ext_beta = 0;
+    std::vector<int> serv_path = {21};
+    std::vector<double> serv_prob = {100};
+
+    // parse command-line args if passed
+    if (argc > 1) {
+        if (argc == 8) {
+            n_epochs=std::atof(argv[1]);
+            arr_lam=std::atof(argv[2]);
+            service_red_beta=std::atof(argv[3]);
+            ext_prob_cap=std::atof(argv[4]);
+            ext_prob=std::atof(argv[5]);
+            wait_ext_beta=std::atof(argv[6]);
+            queue_ext_beta=std::atof(argv[7]);
+        } else {
+            throw std::invalid_argument("Parameter Arguments Invalid Size Error: Attempted to pass parameter arguments, but too few included.");
+        }
+    }
+
+    std::vector<std::pair<std::string, double>> parameters{std::pair("n_epochs", n_epochs), std::pair("n_clinicians", clinicians[0]),
+                                                            std::pair("ext_p_cap", ext_prob_cap), std::pair("ext_p", ext_prob),
+                                                            std::pair("serv_red_beta", service_red_beta), std::pair("wait_ext_beta", wait_ext_beta),
+                                                            std::pair("queue_ext_beta", queue_ext_beta)};
 
     int runs = 1;
 
     for (int ext_pol = 0; ext_pol < sizeof(extension_protocols)/sizeof(std::string); ext_pol++) {
         std::cout << "Running " << extension_protocols[ext_pol] << " policy simulation:" << std::endl;
-        std::string path = "/mnt/c/Users/benja/OneDrive - University of Waterloo/KidsAbility Research/Extending Patient Treatment/C++ Simulation Results/l_36_800_s_1_r/" + extension_protocols[ext_pol] + "/";
+        std::string folder = "/mnt/c/Users/benja/OneDrive - University of Waterloo/KidsAbility Research/Extending Patient Treatment/C++ Simulation_V1 Results/test/";
+        write_csv(folder+"parameters.csv", parameters);
+
+        std::string path = folder + extension_protocols[ext_pol] + "/";
         for (int run = 0; run < runs; run++){
             std::cout << "Run " << run << std::endl;
             std::string run_path =  path + ("simulation_data_" + std::to_string(run) + ".parquet");
-            Simulation sim = Simulation(n_epochs, clinicians, arr_lam, ext_prob, ext_pol, serv_path, serv_prob, run_path);
+            Simulation sim = Simulation(n_epochs, clinicians, arr_lam, service_red_beta, ext_prob_cap, ext_prob, 
+                                        wait_ext_beta, queue_ext_beta, ext_pol, serv_path, serv_prob, run_path);
             sim.generate_servers();
             sim.run();
-            std::cout << "N admitted: " << sim.get_n_admitted() << " N discharged: " << sim.dl.get_n_patients() << " N on waitlist: " << sim.wl.len_waitlist() << std::endl;
+            std::cout << "N admitted: " << sim.get_n_admitted() << " N discharged: " << sim.get_n_discharged() << " N on waitlist: " << sim.get_n_waitlist() << std::endl;
             // output results to a parquet file
             // sim.write_parquet(run_path);
         }
