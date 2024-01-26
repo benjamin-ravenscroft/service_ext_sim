@@ -138,41 +138,50 @@ int main(int argc, char *argv[]){
     int n_epochs = 10000;
     std::vector<int> clinicians = {(800)};
     double arr_lam = 34;
-    double service_red_beta = 0;
+    double service_red_beta = 0.01;
     double ext_prob_cap = 0.2;
     double ext_prob = 0.05;
-    double wait_ext_beta = 0.001;
-    double queue_ext_beta = 0;
+    double wait_ext_beta = 0.002;
+    double queue_ext_beta = 0.001;
     std::vector<int> serv_path = {21};
     std::vector<double> serv_prob = {100};
+    int runs = 1;
+
+    std::string folder = "/mnt/c/Users/benja/OneDrive - University of Waterloo/KidsAbility Research/Extending Patient Treatment/C++ Simulation_V1 Results/";
 
     // parse command-line args if passed
+    // std::cout << "argc" << argc << std::endl;
+    // std::cout << "argv" << argv[0] << std::endl;
     if (argc > 1) {
-        if (argc == 8) {
-            n_epochs=std::atof(argv[1]);
-            arr_lam=std::atof(argv[2]);
+        if (argc == 10) {
+            std::cout << "Processing with CLI arguments." << std::endl;
+            n_epochs=std::stoi(argv[1]);
+            arr_lam=std::stod(argv[2]);
             service_red_beta=std::atof(argv[3]);
             ext_prob_cap=std::atof(argv[4]);
             ext_prob=std::atof(argv[5]);
             wait_ext_beta=std::atof(argv[6]);
             queue_ext_beta=std::atof(argv[7]);
+            runs=std::atof(argv[8]);
+            // folder += ("l_" + std::string(argv[2]) + "_srb_" + std::string(argv[3] + 2) + "_epc_" + std::string(argv[4] + 2) + 
+            //             "_ep_" + std::string(argv[5] + 2) + "_web_" + std::string(argv[6] + 2) + "_qeb_" + std::string(argv[7] + 2) + "/");
+            folder = argv[9];
         } else {
             throw std::invalid_argument("Parameter Arguments Invalid Size Error: Attempted to pass parameter arguments, but too few included.");
         }
+    } else {
+        folder += "test/";
     }
 
     std::vector<std::pair<std::string, double>> parameters{std::pair("n_epochs", n_epochs), std::pair("n_clinicians", clinicians[0]),
                                                             std::pair("ext_p_cap", ext_prob_cap), std::pair("ext_p", ext_prob),
                                                             std::pair("serv_red_beta", service_red_beta), std::pair("wait_ext_beta", wait_ext_beta),
-                                                            std::pair("queue_ext_beta", queue_ext_beta)};
-
-    int runs = 1;
+                                                            std::pair("queue_ext_beta", queue_ext_beta), std::pair("runs", runs),
+                                                            std::pair("arr_lam", arr_lam)};
+    write_csv(folder+"parameters.csv", parameters);
 
     for (int ext_pol = 0; ext_pol < sizeof(extension_protocols)/sizeof(std::string); ext_pol++) {
         std::cout << "Running " << extension_protocols[ext_pol] << " policy simulation:" << std::endl;
-        std::string folder = "/mnt/c/Users/benja/OneDrive - University of Waterloo/KidsAbility Research/Extending Patient Treatment/C++ Simulation_V1 Results/test/";
-        write_csv(folder+"parameters.csv", parameters);
-
         std::string path = folder + extension_protocols[ext_pol] + "/";
         for (int run = 0; run < runs; run++){
             std::cout << "Run " << run << std::endl;
