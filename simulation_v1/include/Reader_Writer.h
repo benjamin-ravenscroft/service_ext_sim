@@ -47,4 +47,18 @@ static std::shared_ptr<GroupNode> SetupSchema() {
         GroupNode::Make("schema", Repetition::REQUIRED, fields));
         
 }
+
+static std::shared_ptr<GroupNode> SetupSchema_Waitlist() {
+    parquet::schema::NodeVector fields;
+
+    fields.push_back(PrimitiveNode::Make("epoch", Repetition::REQUIRED,
+                                        Type::INT32, parquet::ConvertedType::INT_32));
+
+    fields.push_back(PrimitiveNode::Make("waitlist_len", Repetition::REQUIRED,
+                                        Type::INT32, parquet::ConvertedType::INT_32));
+
+    return std::static_pointer_cast<GroupNode>(
+        GroupNode::Make("schema", Repetition::REQUIRED, fields));
+        
+}
 #endif

@@ -137,13 +137,13 @@ int main(int argc, char *argv[]){
     // std::string extension_protocols[3] = {"Standard", "Reduced Frequency", "Waitlist"};
     std::string extension_protocols[1] = {"Standard"};
     int n_epochs = 10000;
-    std::vector<int> clinicians = {(800)};
-    double arr_lam = 34;
-    double service_red_beta = 0.01;
+    std::vector<int> clinicians = {(40)};
+    double arr_lam = 1.65;
+    double service_red_beta = 0;
     double ext_prob_cap = 0.2;
     double ext_prob = 0.05;
-    double wait_ext_beta = 0.002;
-    double queue_ext_beta = 0.001;
+    double wait_ext_beta = 0.001;
+    double queue_ext_beta = 0.000025;
     std::vector<int> serv_path = {21};
     std::vector<double> serv_prob = {100};
     int runs = 1;
@@ -176,7 +176,7 @@ int main(int argc, char *argv[]){
 
     std::vector<std::pair<std::string, double>> parameters{std::pair("n_epochs", n_epochs), std::pair("servers", clinicians[0]),
                                                             std::pair("ext_prob_cap", ext_prob_cap), std::pair("ext_prob", ext_prob),
-                                                            std::pair("serv_red_beta", service_red_beta), std::pair("wait_ext_beta", wait_ext_beta),
+                                                            std::pair("service_red_beta", service_red_beta), std::pair("wait_ext_beta", wait_ext_beta),
                                                             std::pair("queue_ext_beta", queue_ext_beta), std::pair("runs", runs),
                                                             std::pair("arr_lam", arr_lam)};
     write_csv(folder+"parameters.csv", parameters);

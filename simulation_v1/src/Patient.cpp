@@ -22,8 +22,6 @@ void Patient::add_appt(int epoch){
 
 void Patient::add_wait(int wlist_arr_t, int add_t){
     total_wait_time += (add_t - wlist_arr_t);
-    // calculate patient extension probability based on wait time
-    base_ext_p += (wait_ext_beta*total_wait_time);
 }
 
 std::array<bool, 2> Patient::process_patient(int epoch, int wl_len){
