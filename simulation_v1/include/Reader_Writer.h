@@ -43,6 +43,9 @@ static std::shared_ptr<GroupNode> SetupSchema() {
     fields.push_back(PrimitiveNode::Make("total_wait_time", Repetition::REQUIRED,
                                         Type::INT32, parquet::ConvertedType::INT_32));
 
+    fields.push_back(PrimitiveNode::Make("discharge_duration", Repetition::REQUIRED,
+                                        Type::INT32, parquet::ConvertedType::INT_32));
+
     return std::static_pointer_cast<GroupNode>(
         GroupNode::Make("schema", Repetition::REQUIRED, fields));
         

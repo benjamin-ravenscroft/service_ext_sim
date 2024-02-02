@@ -22,14 +22,15 @@
 std::random_device rd;
 std::mt19937 rng(rd());
 
-Simulation::Simulation(int n_epochs, std::vector<int> clinicians, double arr_lam, double service_red_beta,
+Simulation::Simulation(int n_epochs, std::vector<int> clinicians, double arr_lam, double service_red_beta, int service_red_cap,
                         double ext_prob_cap, double ext_prob, double wait_ext_beta, double queue_ext_beta, int ext_pol, 
-                        std::vector<int> pathways, std::vector<double> probs, std::string path) {
+                        std::vector<int> pathways, std::vector<double> probs, std::string path, std::string wl_path) {
 
         Simulation::set_n_epochs(n_epochs);
         Simulation::set_clinicians(clinicians);
         Simulation::set_arr_lam(arr_lam);
         Simulation::set_service_red_beta(service_red_beta);
+        Simulation::set_service_red_cap(service_red_cap);
         Simulation::set_ext_prob_cap(ext_prob_cap);
         Simulation::set_ext_prob(ext_prob);
         Simulation::set_wait_ext_beta(wait_ext_beta);
@@ -41,12 +42,24 @@ Simulation::Simulation(int n_epochs, std::vector<int> clinicians, double arr_lam
         Simulation::set_class_dstb(std::discrete_distribution<> (probs.begin(), probs.end()));
         Simulation::set_discharge_list(path);
         Simulation::set_waitlist(n_classes, rng);
+
+        // setup output stream for waitlist statistics
+        std::shared_ptr<arrow::io::FileOutputStream> outfile;
+        PARQUET_ASSIGN_OR_THROW(
+            outfile,
+            arrow::io::FileOutputStream::Open(wl_path)
+        );
+        std::shared_ptr<parquet::schema::GroupNode> schema = SetupSchema_Waitlist();
+        parquet::WriterProperties::Builder builder;
+        builder.compression(parquet::Compression::GZIP);
+        wl_os = parquet::StreamWriter(parquet::ParquetFileWriter::Open(outfile, schema, builder.build()));
 }
 
 void Simulation::set_n_epochs(int n){n_epochs = n;}
 void Simulation::set_clinicians(std::vector<int> c){clinicians = c;}
 void Simulation::set_arr_lam(double l){arr_lam = l;}
 void Simulation::set_service_red_beta(double b){service_red_beta = b;}
+void Simulation::set_service_red_cap(int c){service_red_cap = c;}
 void Simulation::set_ext_prob_cap(double p){ext_prob_cap = p;}
 void Simulation::set_ext_prob(double p){ext_prob = p;}
 void Simulation::set_wait_ext_beta(double b){wait_ext_beta = b;}
@@ -74,7 +87,8 @@ void Simulation::generate_arrivals(int epoch) {
     // std::cout << "Adding " << n_patients << " patients to waitlist." << std::endl;
     for (int i = 0; i < n_patients; i++) {
         int pat_class = class_dstb(rng); // get int pat class
-        Patient pat = Patient(epoch, pat_class, pathways[pat_class], service_red_beta, ext_prob_cap, ext_prob, wait_ext_beta, queue_ext_beta, rng);
+        Patient pat = Patient(epoch, pat_class, pathways[pat_class], service_red_beta, service_red_cap,
+                                ext_prob_cap, ext_prob, wait_ext_beta, queue_ext_beta, rng);
         wl.add_patient(pat, epoch);
         // std::cout << "Waitlist length after adding patient: " << wl.len_waitlist() << std::endl;
     }
@@ -87,6 +101,7 @@ void Simulation::run() {
         for (int i = 0; i < servers.size(); i++) {
             servers[i].process_epoch(epoch);
         }
+        stream_waitlist(epoch);
     }
     auto stop = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::seconds>(stop - start);
@@ -133,13 +148,18 @@ void Simulation::write_parquet(std::string path) {
     }
 }
 
+void Simulation::stream_waitlist(int epoch){
+    wl_os << epoch << wl.len_waitlist() << parquet::EndRow;
+}
+
 int main(int argc, char *argv[]){
     // std::string extension_protocols[3] = {"Standard", "Reduced Frequency", "Waitlist"};
     std::string extension_protocols[1] = {"Standard"};
     int n_epochs = 10000;
     std::vector<int> clinicians = {(40)};
     double arr_lam = 1.65;
-    double service_red_beta = 0;
+    double service_red_beta = 1;
+    int service_red_cap = 6;
     double ext_prob_cap = 0.2;
     double ext_prob = 0.05;
     double wait_ext_beta = 0.001;
@@ -154,21 +174,24 @@ int main(int argc, char *argv[]){
     // std::cout << "argc" << argc << std::endl;
     // std::cout << "argv" << argv[0] << std::endl;
     if (argc > 1) {
-        if (argc == 10) {
+        if (argc == 11) {
             std::cout << "Processing with CLI arguments." << std::endl;
             n_epochs=std::stoi(argv[1]);
             arr_lam=std::stod(argv[2]);
             service_red_beta=std::atof(argv[3]);
-            ext_prob_cap=std::atof(argv[4]);
-            ext_prob=std::atof(argv[5]);
-            wait_ext_beta=std::atof(argv[6]);
-            queue_ext_beta=std::atof(argv[7]);
-            runs=std::atof(argv[8]);
+            std::cout << "Service reduction beta: " << service_red_beta;
+            service_red_cap=std::atof(argv[4]);
+            std::cout << "Service reduction cap: " << service_red_cap;
+            ext_prob_cap=std::atof(argv[5]);
+            ext_prob=std::atof(argv[6]);
+            wait_ext_beta=std::atof(argv[7]);
+            queue_ext_beta=std::atof(argv[8]);
+            runs=std::atof(argv[9]);
             // folder += ("l_" + std::string(argv[2]) + "_srb_" + std::string(argv[3] + 2) + "_epc_" + std::string(argv[4] + 2) + 
             //             "_ep_" + std::string(argv[5] + 2) + "_web_" + std::string(argv[6] + 2) + "_qeb_" + std::string(argv[7] + 2) + "/");
-            folder = argv[9];
+            folder = argv[10];
         } else {
-            throw std::invalid_argument("Parameter Arguments Invalid Size Error: Attempted to pass parameter arguments, but too few included.");
+            throw std::invalid_argument("Parameter Arguments Invalid Size Error: Attempted to pass parameter arguments, but too few included. n_args: " + std::to_string(argc));
         }
     } else {
         folder += "test/";
@@ -176,19 +199,21 @@ int main(int argc, char *argv[]){
 
     std::vector<std::pair<std::string, double>> parameters{std::pair("n_epochs", n_epochs), std::pair("servers", clinicians[0]),
                                                             std::pair("ext_prob_cap", ext_prob_cap), std::pair("ext_prob", ext_prob),
-                                                            std::pair("service_red_beta", service_red_beta), std::pair("wait_ext_beta", wait_ext_beta),
-                                                            std::pair("queue_ext_beta", queue_ext_beta), std::pair("runs", runs),
-                                                            std::pair("arr_lam", arr_lam)};
+                                                            std::pair("service_red_beta", service_red_beta), std::pair("service_red_cap", service_red_cap),
+                                                            std::pair("wait_ext_beta", wait_ext_beta), std::pair("queue_ext_beta", queue_ext_beta),
+                                                            std::pair("runs", runs), std::pair("arr_lam", arr_lam)};
     write_csv(folder+"parameters.csv", parameters);
 
     for (int ext_pol = 0; ext_pol < sizeof(extension_protocols)/sizeof(std::string); ext_pol++) {
         std::cout << "Running " << extension_protocols[ext_pol] << " policy simulation:" << std::endl;
         std::string path = folder + extension_protocols[ext_pol] + "/";
+        std::string wl_path = folder + extension_protocols[ext_pol] + "/waitlist_data/";
         for (int run = 0; run < runs; run++){
             std::cout << "Run " << run << std::endl;
             std::string run_path =  path + ("simulation_data_" + std::to_string(run) + ".parquet");
-            Simulation sim = Simulation(n_epochs, clinicians, arr_lam, service_red_beta, ext_prob_cap, ext_prob, 
-                                        wait_ext_beta, queue_ext_beta, ext_pol, serv_path, serv_prob, run_path);
+            std::string waitlist_path = wl_path + ("waitlist_data_" + std::to_string(run) + ".parquet");
+            Simulation sim = Simulation(n_epochs, clinicians, arr_lam, service_red_beta, service_red_cap, ext_prob_cap, ext_prob, 
+                                        wait_ext_beta, queue_ext_beta, ext_pol, serv_path, serv_prob, run_path, waitlist_path);
             sim.generate_servers();
             sim.run();
             std::cout << "N admitted: " << sim.get_n_admitted() << " N discharged: " << sim.get_n_discharged() << " N on waitlist: " << sim.get_n_waitlist() << std::endl;
@@ -196,12 +221,4 @@ int main(int argc, char *argv[]){
             // sim.write_parquet(run_path);
         }
     }
-
-    // Patient pat = Patient(0, 0, 14, 0.05, rng);
-    // Waitlist wl = Waitlist(1, rng);
-    // DischargeList dl = DischargeList();
-    // Server serv = Server(wl, dl, "std");
-    // wl.add_patient(pat, 1);
-    // serv.add_from_waitlist(5);
-    // serv.print_patients();
 };
